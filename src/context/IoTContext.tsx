@@ -70,8 +70,8 @@ export function IoTProvider({ children }: { children: ReactNode }) {
     setSensorsError(null);
     try {
       setSensorData(await IoTService.getSensorData());
-    } catch {
-      setSensorsError('Unable to retrieve sensor data.');
+    } catch (error) {
+      setSensorsError(errorMessage(error, 'Unable to retrieve sensor data.'));
     } finally {
       setSensorsLoading(false);
     }

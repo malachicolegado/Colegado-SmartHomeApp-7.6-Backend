@@ -10,7 +10,6 @@ import { formatTemperature, useIoT } from '@/context/IoTContext';
 // Upper bounds used to fill each sensor's meter bar.
 const MAX_TEMPERATURE_C = 45;
 const MAX_HUMIDITY = 100;
-const MAX_LIGHT_LUX = 1000;
 
 export default function SensorsScreen() {
   const { sensorData, sensorsLoading, sensorsError, gatewayConnected, temperatureUnit, refreshSensors } =
@@ -45,10 +44,9 @@ export default function SensorsScreen() {
           progress={sensorData ? sensorData.humidity / MAX_HUMIDITY : 0}
         />
         <SensorCard
-          label="Light Level"
-          icon="white-balance-sunny"
-          value={sensorData ? `${sensorData.lightLevel} lux` : '--'}
-          progress={sensorData ? sensorData.lightLevel / MAX_LIGHT_LUX : 0}
+          label={sensorData ? `Last Reading · ${sensorData.deviceId}` : 'Last Reading'}
+          icon="clock-outline"
+          value={sensorData ? sensorData.recordedAt : '--'}
         />
       </View>
 

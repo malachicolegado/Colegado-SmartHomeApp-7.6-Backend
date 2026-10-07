@@ -82,9 +82,9 @@ export default function DashboardScreen() {
               label="Humidity"
             />
             <HeroStat
-              icon="white-balance-sunny"
-              value={sensorData ? `${sensorData.lightLevel} lux` : '--'}
-              label="Light"
+              icon="clock-outline"
+              value={sensorData ? sensorData.recordedAt.split(' ')[1] : '--'}
+              label="Updated"
             />
           </View>
         </Pressable>

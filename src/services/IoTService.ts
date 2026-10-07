@@ -1,52 +1,44 @@
-import { sampleDevices, sampleSensorData, type Device, type SensorData } from '@/models/IoTModels';
+import Constants from 'expo-constants';
 
-const FAILURE_RATE = 0.2;
+import type { Device, SensorData } from '@/models/IoTModels';
 
-let deviceStore: Device[] = sampleDevices.map((device) => ({ ...device }));
+const host = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
 
-function delay(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? `http://${host}:3000/api`;
 
-function simulateFailure(message: string) {
-  if (Math.random() < FAILURE_RATE) {
-    throw new Error(message);
+async function request<T>(path: string, fallback: string, options?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch {
+    throw new Error('Unable to reach the server.');
   }
-}
 
-function randomAround(value: number, spread: number) {
-  return Math.round(value + (Math.random() * 2 - 1) * spread);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.message ?? fallback);
+  }
+  return data as T;
 }
 
 export async function connectGateway(): Promise<void> {
-  await delay(1200);
-  simulateFailure('Unable to reach the IoT Gateway.');
+  await request('/health', 'Unable to reach the IoT Gateway.');
 }
 
 export async function getDevices(): Promise<Device[]> {
-  await delay(1500);
-  simulateFailure('Unable to load devices.');
-  return deviceStore.map((device) => ({ ...device }));
+  return request<Device[]>('/devices', 'Unable to load devices.');
 }
 
 export async function getSensorData(): Promise<SensorData> {
-  await delay(1500);
-  simulateFailure('Unable to retrieve sensor data.');
-  return {
-    temperature: randomAround(sampleSensorData.temperature, 3),
-    humidity: randomAround(sampleSensorData.humidity, 10),
-    lightLevel: randomAround(sampleSensorData.lightLevel, 200),
-  };
+  return request<SensorData>('/sensor-readings/latest', 'Unable to retrieve sensor data.');
 }
 
 export async function updateDeviceStatus(id: number, status: boolean): Promise<Device> {
-  await delay(1000);
-  const device = deviceStore.find((item) => item.id === id);
-  if (!device) {
-    throw new Error('Device not found.');
-  }
-  simulateFailure(`Unable to update ${device.name}.`);
-
-  deviceStore = deviceStore.map((item) => (item.id === id ? { ...item, status } : item));
-  return { ...device, status };
+  return request<Device>(`/devices/${id}`, 'Unable to update device.', {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  });
 }
